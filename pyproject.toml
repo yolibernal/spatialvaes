@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "spatialvaes"
+version = "0.1.0"
+description = ""
+authors = ["Jonas Bernhard <jonasbernhard96@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.8.16"
+
+
+[[tool.poetry.source]]
+name = "pytorch-cu118"
+url = "https://download.pytorch.org/whl/cu118"
+priority = "explicit"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
