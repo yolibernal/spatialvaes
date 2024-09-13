@@ -8,14 +8,10 @@ from spatialvaes.encoders import ImageEncoder
 
 
 class MLP(nn.Module):
+    """Multi-layer perceptron with ReLU activations."""
+
     def __init__(self, in_dim: int, out_dim: int, hidden_dims: Sequence[int]) -> None:
         super().__init__()
-
-        # modules = nn.Sequential(
-        #     nn.Linear(in_features=1024, out_features=256),
-        #     nn.ReLU(),
-        #     nn.Linear(in_features=256, out_features=20),
-        # )
 
         modules = []
         for i in range(len(hidden_dims) + 1):
@@ -29,21 +25,21 @@ class MLP(nn.Module):
                 module_in_channels = hidden_dims[i - 1]
                 module_out_channels = hidden_dims[i]
             modules.append(nn.Linear(module_in_channels, module_out_channels))
+
             if i != len(hidden_dims):
                 modules.append(nn.ReLU())
-            # modules.append(nn.BatchNorm1d(module_out_channels))
-            # modules.append(nn.ReLU())
+
         self.mlp = nn.Sequential(*modules)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.mlp(x)
 
-        # return torch.chunk(x, 2, dim=1)
-
         return x
 
 
 class ChunkedMLP(MLP):
+    """MLP with output split into two chunks."""
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.mlp(x)
 
@@ -51,12 +47,13 @@ class ChunkedMLP(MLP):
 
 
 class VAE(nn.Module):
+    """Variational autoencoder."""
+
     def __init__(
         self,
         encoder: nn.Module,
         encoder_mu: nn.Module,
         encoder_logvar: nn.Module,
-        # encoder_mu_logvar: nn.Module,
         decoder: nn.Module,
     ) -> None:
         super().__init__()
@@ -64,14 +61,12 @@ class VAE(nn.Module):
         self.encoder = encoder
         self.encoder_mu = encoder_mu
         self.encoder_logvar = encoder_logvar
-        # self.encoder_mu_logvar = encoder_mu_logvar
 
         self.decoder = decoder
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         features = self.encoder(x)
         features = features.view(features.size(0), -1)
-        # mu, logvar = self.encoder_mu_logvar(features)
         mu = self.encoder_mu(features)
         logvar = self.encoder_logvar(features)
         z = self.reparameterize(mu, logvar)
@@ -87,6 +82,8 @@ class VAE(nn.Module):
 
 
 class ImageVAE(VAE):
+    """VAE using image encoder and decoder."""
+
     def __init__(
         self,
         in_resolution: int,
@@ -117,6 +114,8 @@ class ImageVAE(VAE):
 
 
 class SpatialBroadcastVAE(VAE):
+    """VAE using image encoder and spatial broadcast decoder."""
+
     def __init__(
         self,
         in_resolution: int,
@@ -132,8 +131,6 @@ class SpatialBroadcastVAE(VAE):
         encoder = ImageEncoder(in_channels, hidden_dims_encoder, kernel_size=kernel_size_encoder)
 
         in_dim = hidden_dims_encoder[-1] * (in_resolution // 2 ** len(hidden_dims_encoder)) ** 2
-        # print(f"in_dim: {in_dim}")
-        # encoder_mu_logvar = ChunkedMLP(in_dim=in_dim, out_dim=latent_dim * 2, hidden_dims=fc_dims)
         encoder_mu = MLP(in_dim=in_dim, out_dim=latent_dim, hidden_dims=fc_dims)
         encoder_logvar = MLP(in_dim=in_dim, out_dim=latent_dim, hidden_dims=fc_dims)
         decoder = SpatialBroadcastDecoder(
@@ -144,7 +141,6 @@ class SpatialBroadcastVAE(VAE):
             num_coordinate_channel_pairs=num_coordinate_channel_pairs,
         )
         super().__init__(encoder, encoder_mu, encoder_logvar, decoder)
-        # super().__init__(encoder, encoder_mu_logvar, decoder)
 
     @classmethod
     def from_config(cls, conf: Dict[str, Any]) -> "SpatialBroadcastVAE":

@@ -13,6 +13,8 @@ from spatialvaes.layers import CoordConv2d
 
 
 class Bottleneck(nn.Module):
+    """Bottleneck module with fully connected layers and ReLU activations."""
+
     def __init__(self, in_dim: int, out_dim: int, hidden_dims: Sequence[int]) -> None:
         super().__init__()
 
@@ -29,7 +31,6 @@ class Bottleneck(nn.Module):
                 module_in_channels = hidden_dims[i - 1]
                 module_out_channels = hidden_dims[i]
             modules.append(nn.Linear(module_in_channels, module_out_channels))
-            # modules.append(nn.BatchNorm1d(module_out_channels))
             modules.append(nn.ReLU())
         modules.append(nn.Unflatten(dim=1, unflattened_size=(out_dim, 1, 1)))
         self.bottleneck = nn.Sequential(*modules)
@@ -40,6 +41,8 @@ class Bottleneck(nn.Module):
 
 
 class AE(nn.Module):
+    """Autoencoder with encoder, bottleneck, and decoder."""
+
     def __init__(self, encoder: nn.Module, bottleneck: nn.Module, decoder: nn.Module) -> None:
         super().__init__()
 
@@ -55,6 +58,8 @@ class AE(nn.Module):
 
 
 class ImageAE(AE):
+    """Autoencoder using image encoder and decoder"""
+
     def __init__(
         self,
         in_resolution: int,
@@ -71,6 +76,8 @@ class ImageAE(AE):
 
 
 class ImageUpscaleAE(ImageAE):
+    """Image autoencoder using upscale deocder"""
+
     def __init__(
         self,
         in_resolution: int,
@@ -84,6 +91,8 @@ class ImageUpscaleAE(ImageAE):
 
 
 class ImageCoordConvAE(ImageAE):
+    """Image autoencoder using CoordConv decoder"""
+
     def __init__(
         self,
         in_resolution: int,
@@ -93,11 +102,12 @@ class ImageCoordConvAE(ImageAE):
     ) -> None:
         super().__init__(in_resolution, in_channels, hidden_dims, bottleneck_dims)
 
-        self.encoder = ImageEncoder(in_channels, hidden_dims, conv_class=CoordConv2d)
         self.decoder = ImageUpscaleDecoder(in_channels, hidden_dims[::-1], conv_class=CoordConv2d)
 
 
 class ImageSingleCoordConvAE(ImageAE):
+    """Image autoencoder with decoder using single CoordConv layer"""
+
     def __init__(
         self,
         in_resolution: int,

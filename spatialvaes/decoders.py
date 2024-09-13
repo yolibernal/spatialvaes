@@ -7,6 +7,9 @@ from spatialvaes.layers import CoordConv2d
 
 
 class ImageDecoder(nn.Module):
+    """Decode image from low-dimensional (cartesian) representation of object position
+    using transposed convolutional layers."""
+
     def __init__(self, out_channels, hidden_dims: Sequence[int]) -> None:
         super().__init__()
 
@@ -41,9 +44,10 @@ class ImageDecoder(nn.Module):
 
 
 class ImageUpscaleDecoder(nn.Module):
-    def __init__(
-        self, out_channels, hidden_dims: Sequence[int], conv_class=nn.Conv2d
-    ) -> None:
+    """Decode image from low-dimensional (cartesian) representation of object position
+    using upsampling and convolutional layers."""
+
+    def __init__(self, out_channels, hidden_dims: Sequence[int], conv_class=nn.Conv2d) -> None:
         super().__init__()
 
         modules = []
@@ -75,41 +79,10 @@ class ImageUpscaleDecoder(nn.Module):
         return x
 
 
-# class ImageSingleCoordConvDecoder(nn.Module):
-#     def __init__(self, out_channels, hidden_dims: Sequence[int], conv_class=nn.Conv2d) -> None:
-#         super().__init__()
-
-#         modules = []
-#         modules.append(nn.Upsample(scale_factor=2 ** len(hidden_dims)))
-#         for i in range(len(hidden_dims)):
-#             if i == 0:
-#                 conv_class = CoordConv2d
-#             else:
-#                 conv_class = nn.Conv2d
-
-#             if i == len(hidden_dims) - 1:
-#                 module_in_channels = hidden_dims[-1]
-#                 module_out_channels = out_channels
-#             else:
-#                 module_in_channels = hidden_dims[i]
-#                 module_out_channels = hidden_dims[i + 1]
-#             modules.append(
-#                 conv_class(
-#                     module_in_channels, module_out_channels, kernel_size=3, stride=1, padding=1
-#                 )
-#             )
-#             if i == len(hidden_dims) - 1:
-#                 modules.append(nn.Sigmoid())
-#             else:
-#                 modules.append(nn.ReLU())
-#         self.decoder = nn.Sequential(*modules)
-
-#     def forward(self, x: torch.Tensor) -> torch.Tensor:
-#         x = self.decoder(x)
-#         return x
-
-
 class ImageSingleCoordConvDecoder(nn.Module):
+    """Decode image from low-dimensional (cartesian) representation of object position
+    using a single CoordConv layer followed by upsampling and convolutional layers."""
+
     def __init__(
         self,
         out_channels,
@@ -122,8 +95,7 @@ class ImageSingleCoordConvDecoder(nn.Module):
         modules = []
         for i in range(len(hidden_dims) - 1):
             if i == len(hidden_dims) - 2:
-                # conv_class = CoordConv2d
-                conv_class = nn.Conv2d
+                conv_class = CoordConv2d
             else:
                 conv_class = nn.Conv2d
 
@@ -171,6 +143,9 @@ class ImageSingleCoordConvDecoder(nn.Module):
 
 
 class SpatialBroadcastDecoder(nn.Module):
+    """Decode image from low-dimensional (cartesian) representation of object position
+    using a spatial broadcast decoder (Watters et al., 2019)."""
+
     def __init__(
         self,
         out_channels,
@@ -191,14 +166,6 @@ class SpatialBroadcastDecoder(nn.Module):
         self.register_buffer("y_grid", (y_grid.view((1, 1) + y_grid.shape)).clone())
 
         self.num_coordinate_channel_pairs = num_coordinate_channel_pairs
-
-        # modules = [
-        #     nn.Conv2d(in_channels=12, out_channels=64, kernel_size=3, padding=1),
-        #     nn.ReLU(),
-        #     nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1),
-        #     nn.ReLU(),
-        #     nn.Conv2d(in_channels=64, out_channels=3, kernel_size=3, padding=1),
-        # ]
 
         modules = []
         for i in range(len(hidden_dims)):

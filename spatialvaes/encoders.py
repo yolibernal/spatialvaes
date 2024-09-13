@@ -7,24 +7,12 @@ from spatialvaes.layers import CoordConv2d
 
 
 class ImageEncoder(nn.Module):
+    """Encode image using convolutional layers."""
+
     def __init__(
         self, in_channels: int, hidden_dims: Sequence[int], conv_class=nn.Conv2d, kernel_size=3
     ) -> None:
         super().__init__()
-
-        # modules = [
-        #     nn.Conv2d(in_channels=3, out_channels=64, kernel_size=4, stride=2, padding=1),
-        #     nn.ReLU(),
-        # ]
-        # modules.extend(
-        #     [
-        #         nn.Sequential(
-        #             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=4, stride=2, padding=1),
-        #             nn.ReLU(),
-        #         )
-        #         for i in range(3)
-        #     ]
-        # )
 
         modules = []
         for i in range(len(hidden_dims)):
@@ -43,7 +31,6 @@ class ImageEncoder(nn.Module):
                     padding=1,
                 )
             )
-            # modules.append(nn.BatchNorm2d(module_out_channels))
             modules.append(nn.ReLU())
         self.encoder = nn.Sequential(*modules)
 
@@ -53,6 +40,8 @@ class ImageEncoder(nn.Module):
 
 
 class ImageSingleCoordConvEncoder(nn.Module):
+    """Encode image using convolutional layers with single CoordConv layer."""
+
     def __init__(self, in_channels: int, hidden_dims: Sequence[int]) -> None:
         super().__init__()
 
@@ -72,7 +61,6 @@ class ImageSingleCoordConvEncoder(nn.Module):
                     module_in_channels, module_out_channels, kernel_size=3, stride=2, padding=1
                 )
             )
-            # modules.append(nn.BatchNorm2d(module_out_channels))
             modules.append(nn.ReLU())
         self.encoder = nn.Sequential(*modules)
 

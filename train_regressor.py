@@ -167,9 +167,6 @@ for epoch in range(conf["epochs"]):
                 p2_hat = label_hat[i, 2:4].detach().cpu().numpy()
                 p3_hat = label_hat[i, 4:].detach().cpu().numpy()
 
-                print(p1, p2, p3)
-                print(p1_hat, p2_hat, p3_hat)
-
                 axes.flat[i].scatter(p1[0], p1[1], c="r", s=10)
                 axes.flat[i].scatter(p2[0], p2[1], c="r", s=10)
                 axes.flat[i].scatter(p3[0], p3[1], c="r", s=10)

@@ -12,6 +12,8 @@ from spatialvaes.layers import CoordConv2d
 
 
 class ImageRenderer(nn.Module):
+    """Render image from low-dimensional (cartesian) representation of object position."""
+
     def __init__(self, input_dim: int, hidden_dims: Sequence[int]) -> None:
         super().__init__()
 

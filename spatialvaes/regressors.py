@@ -7,6 +7,7 @@ from spatialvaes.encoders import ImageEncoder
 
 
 class ImageRegressor(nn.Module):
+    """Find low-dimensional (cartesian) representation of object position from image."""
     def __init__(
         self,
         in_channels: int,

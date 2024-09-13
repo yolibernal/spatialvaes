@@ -7,10 +7,15 @@ from torch.utils.data import Dataset
 
 
 class CausalImageDataset(Dataset):
+    """Dataset of pairs of before-and-after images and their corresponding latents.
+    If merge_before_after is True, then the dataset will return a single image and latent pair,
+    with the image being either the before or after image.
+    If merge_before_after is False, then the dataset will return a pair of before and after images and latents.
+    """
+
     def __init__(
         self,
         npz_data,
-        noise=None,
         size=None,
         mean=None,
         std=None,
@@ -18,7 +23,6 @@ class CausalImageDataset(Dataset):
         max=None,
         normalization="none",
         merge_before_after=True,
-        flatten=False,
     ):
         self._x = npz_data["imgs"]
         self._z0 = npz_data["original_latents"][:, 0, :]
@@ -37,8 +41,6 @@ class CausalImageDataset(Dataset):
         self._e0 = npz_data["epsilon"][:, 0, :]
         self._e1 = npz_data["epsilon"][:, 1, :]
 
-        self.noise = noise
-
         self.size = size
 
         self.mean = mean
@@ -48,7 +50,6 @@ class CausalImageDataset(Dataset):
         self.max = max
 
         self.normalization = normalization
-        self.flatten = flatten
         self.merge_before_after = merge_before_after
 
     def __getitem__(self, index):
@@ -68,11 +69,6 @@ class CausalImageDataset(Dataset):
         z1 = self._get_z(index, True)
         intervention_label = torch.LongTensor(self._intervention_labels[index])  # (1,)
         intervention_mask = torch.BoolTensor(self._intervention_masks[index])
-
-        if self.noise is not None and self.noise > 0.0:
-            # noinspection PyTypeChecker
-            x0 += self.noise * torch.randn_like(x0)
-            x1 += self.noise * torch.randn_like(x1)
 
         e0 = self._get_e(index, False)
         e1 = self._get_e(index, True)
@@ -106,9 +102,6 @@ class CausalImageDataset(Dataset):
                 torch.FloatTensor(self.max).view(3, 1, 1)
                 - torch.FloatTensor(self.min).view(3, 1, 1)
             )
-
-        if self.flatten:
-            tensor = tensor.reshape(-1)
 
         return tensor
 
